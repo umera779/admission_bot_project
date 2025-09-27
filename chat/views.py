@@ -145,7 +145,7 @@ def admin_login(request):
         if user is not None:
             if user.is_staff:  # Only allow staff/admin users
                 login(request, user)
-                next_url = request.GET.get('next', '/chat/faq-dashboard/')
+                next_url = request.GET.get('next', '/faq-dashboard/')
                 return redirect(next_url)
             else:
                 messages.error(request, 'Access denied. Admins only.')
@@ -155,4 +155,5 @@ def admin_login(request):
 
 def admin_logout(request):
     logout(request)
+
     return redirect('admin_login')
