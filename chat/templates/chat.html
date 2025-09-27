@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admission Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        polyMaroon: '#800000',
+                        polyMaroonLight: '#A52A2A',
+                        polyWhite: '#FFFFFF',
+                        polyLightBg: '#FFF9F9',
+                        polyBorder: '#E0B0B0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message {
+            animation: fadeIn 0.2s ease-out;
+        }
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s infinite;
+            display: inline-block;
+            width: 20px;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        #chat-messages {
+            scroll-behavior: smooth;
+        }
+        body {
+            overflow-x: hidden;
+        }
+        #chat-messages, .message-bubble {
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
+            hyphens: auto;
+        }
+    </style>
+</head>
+<body class="bg-polyLightBg text-gray-900">
+    <!-- Fixed Header with Logo and Auth Link -->
+    <header class="fixed top-0 left-0 right-0 z-10 bg-polyMaroon text-polyWhite p-3 shadow-md">
+        <div class="container mx-auto flex items-center justify-between">
+            <!-- Logo + Title Group -->
+            <div class="flex items-center">
+                <div class="flex-shrink-0 mr-3">
+                    <img 
+                        src="logo.png" 
+                        alt="Akanu Ibiam Polytechnic Logo"
+                        class="h-10 w-auto object-contain"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23800000%22/><text x=%2250%22 y=%2255%22 font-family=%22Arial%22 font-size=%2220%22 fill=%22white%22 text-anchor=%22middle%22>AIP</text></svg>'"
+                    >
+                </div>
+                <div class="hidden sm:block">
+                    <h1 class="text-lg md:text-xl font-bold tracking-tight">ADMISSION BOT</h1>
+                    <p class="text-polyWhite/90 mt-0.5 text-xs">Akanu Ibiam Federal Polytechnic, Uwana</p>
+                </div>
+            </div>
+
+            <!-- Login / Logout -->
+            <div>
+                {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'admin_logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-polyWhite/20 hover:bg-polyWhite/30 px-3 py-1.5 rounded text-sm font-medium transition-colors">
+                            Logout
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'admin_login' %}" class="bg-polyWhite/20 hover:bg-polyWhite/30 px-3 py-1.5 rounded text-sm font-medium inline-block transition-colors">
+                        Login
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Mobile subtitle (below header on small screens) -->
+        <div class="text-center sm:hidden mt-1 text-xs text-polyWhite/90">
+            Akanu Ibiam Federal Polytechnic, Uwana
+        </div>
+    </header>
+
+    <!-- Chat Container -->
+    <div id="chat-container" class="flex flex-col h-screen pt-24 pb-24">
+        <!-- Predefined Questions -->
+        <div id="predefined-questions" class="p-4 bg-polyMaroon/3 border-b border-polyBorder">
+            <div class="flex flex-wrap gap-2 justify-center">
+                <button onclick="sendPredefinedQuestion('What are the admission requirements?')" class="px-3 py-2 bg-polyMaroon hover:bg-polyMaroonLight text-polyWhite rounded-lg text-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap">Admission Requirements</button>
+                <button onclick="sendPredefinedQuestion('What is the application deadline?')" class="px-3 py-2 bg-polyMaroon hover:bg-polyMaroonLight text-polyWhite rounded-lg text-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap">Application Deadline</button>
+                <button onclick="sendPredefinedQuestion('How much is the tuition fee?')" class="px-3 py-2 bg-polyMaroon hover:bg-polyMaroonLight text-polyWhite rounded-lg text-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap">Tuition Fees</button>
+            </div>
+        </div>
+        
+        <!-- Chat Messages -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-polyLightBg">
+            {% for message in messages %}
+            <div class="message {% if message.sender == 'user' %}user-message{% else %}bot-message{% endif %}">
+                <div class="{% if message.sender == 'user' %}ml-auto bg-polyMaroon text-polyWhite {% else %}bg-white border border-polyBorder {% endif %} max-w-[85%] rounded-2xl px-4 py-3 shadow-sm message-bubble">
+                    <strong class="block text-sm font-medium mb-1">{% if message.sender == 'user' %}You{% else %}Admission Bot{% endif %}</strong>
+                    <div class="whitespace-pre-wrap">{{ message.message|safe }}</div>
+                </div>
+                <small class="text-xs text-gray-500 mt-1 block {% if message.sender == 'user' %}text-right{% endif %}">{{ message.timestamp|date:"H:i" }}</small>
+            </div>
+            {% endfor %}
+            
+            <!-- Loading Indicator -->
+            <div id="loading-indicator" class="hidden bot-message">
+                <div class="bg-white border border-polyBorder max-w-[85%] rounded-2xl px-4 py-3 shadow-sm">
+                    <div class="loading-dots text-gray-600">typing</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Input Container -->
+    <div id="input-container" class="fixed bottom-0 left-0 right-0 z-10 bg-white border-t border-polyBorder p-3">
+        <div class="container mx-auto flex gap-2">
+            <input type="text" id="message-input" placeholder="Ask about admission..." 
+                class="flex-1 bg-white border border-polyBorder rounded-full px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-polyMaroon"
+                onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()" 
+                class="bg-polyMaroon hover:bg-polyMaroonLight text-polyWhite rounded-full px-5 py-3 font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-polyMaroon focus:ring-offset-2 whitespace-nowrap">
+                Send
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const sessionId = '{{ session_id }}';
+        let currentRole = '{{ role }}';
+
+        function sendPredefinedQuestion(question) {
+            document.getElementById('message-input').value = question;
+            sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            addMessageToUI(message, 'user');
+            input.value = '';
+            showLoadingIndicator();
+            
+            fetch('/api/chat/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    message: message,
+                    session_id: sessionId,
+                    role: currentRole
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoadingIndicator();
+                addMessageToUI(data.response, 'bot');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                hideLoadingIndicator();
+                addMessageToUI('Error occurred. Please try again.', 'bot');
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
+        function showLoadingIndicator() {
+            document.getElementById('loading-indicator').classList.remove('hidden');
+            scrollToBottom();
+        }
+
+        function hideLoadingIndicator() {
+            document.getElementById('loading-indicator').classList.add('hidden');
+        }
+
+        function addMessageToUI(message, sender) {
+            const chatDiv = document.getElementById('chat-messages');
+            const messageContainer = document.createElement('div');
+            messageContainer.className = `message ${sender}-message`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `${sender === 'user' ? 'ml-auto bg-polyMaroon text-polyWhite' : 'bg-white border border-polyBorder'} max-w-[85%] rounded-2xl px-4 py-3 shadow-sm message-bubble`;
+            
+            const senderLabel = document.createElement('strong');
+            senderLabel.className = 'block text-sm font-medium mb-1';
+            senderLabel.textContent = sender === 'user' ? 'You' : 'Admission Bot';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'whitespace-pre-wrap';
+            messageContent.innerHTML = message.replace(/\n/g, '<br>');
+            
+            const timestamp = document.createElement('small');
+            timestamp.className = `text-xs text-gray-500 mt-1 block ${sender === 'user' ? 'text-right' : ''}`;
+            const now = new Date();
+            timestamp.textContent = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            bubble.appendChild(senderLabel);
+            bubble.appendChild(messageContent);
+            messageContainer.appendChild(bubble);
+            messageContainer.appendChild(timestamp);
+            
+            chatDiv.insertBefore(messageContainer, document.getElementById('loading-indicator'));
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            scrollToBottom();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!-- templates/chat/faq_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admission FAQ Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        polyMaroon: '#800000',
+                        polyMaroonLight: '#A52A2A',
+                        polyWhite: '#FFFFFF',
+                        polyLightBg: '#FFF9F9',
+                        polyBorder: '#E0B0B0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { overflow-x: hidden; }
+        .faq-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .faq-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(128, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-polyLightBg text-gray-900">
+
+    <!-- Fixed Header with Logo and Auth Links -->
+    <header class="fixed top-0 left-0 right-0 z-10 bg-polyMaroon text-polyWhite p-3 shadow-md">
+        <div class="container mx-auto flex items-center justify-between">
+            <!-- Logo + Title -->
+            <div class="flex items-center">
+                <div class="flex-shrink-0 mr-3">
+                    <img 
+                        src="https://akanu-ibiam-poly.edu.ng/wp-content/uploads/2021/09/cropped-Akanu-Ibiam-Polytechnic-Logo.png" 
+                        alt="Akanu Ibiam Polytechnic Logo"
+                        class="h-10 w-auto object-contain"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23800000%22/><text x=%2250%22 y=%2255%22 font-family=%22Arial%22 font-size=%2220%22 fill=%22white%22 text-anchor=%22middle%22>AIP</text></svg>'"
+                    >
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold tracking-tight">
+                        ADMISSION FAQ DASHBOARD
+                    </h1>
+                    <p class="text-polyWhite/90 mt-0.5 text-xs hidden sm:block">
+                        Akanu Ibiam Federal Polytechnic, Uwana
+                    </p>
+                </div>
+            </div>
+
+            <!-- Auth Links (Login / Logout) -->
+            <div class="flex-shrink-0">
+                {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'admin_logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-polyWhite/20 hover:bg-polyWhite/30 text-polyWhite px-3 py-1.5 rounded text-sm font-medium transition-colors">
+                            Logout
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="bg-polyWhite/20 hover:bg-polyWhite/30 text-polyWhite px-3 py-1.5 rounded text-sm font-medium inline-block transition-colors">
+                        Login
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-20 pb-8 px-4 max-w-4xl mx-auto">
+        <!-- System Messages -->
+        {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 rounded">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Add/Edit FAQ Form -->
+        <section class="bg-white rounded-xl shadow-md p-5 mb-8 border border-polyBorder">
+            <h2 class="text-xl font-bold text-polyMaroon mb-4">
+                {% if edit_faq %}Edit FAQ{% else %}Add New FAQ{% endif %}
+            </h2>
+            <form method="post">
+                {% csrf_token %}
+                {% if edit_faq %}
+                    <input type="hidden" name="faq_id" value="{{ edit_faq.id }}">
+                {% endif %}
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Question:</label>
+                    <textarea 
+                        name="question" 
+                        rows="3" 
+                        class="w-full p-3 border border-polyBorder rounded-lg focus:ring-2 focus:ring-polyMaroon focus:outline-none"
+                        placeholder="Enter the frequently asked question...">{% if edit_faq %}{{ edit_faq.question }}{% endif %}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Answer:</label>
+                    <textarea 
+                        name="answer" 
+                        rows="5" 
+                        class="w-full p-3 border border-polyBorder rounded-lg focus:ring-2 focus:ring-polyMaroon focus:outline-none"
+                        placeholder="Enter the detailed answer...">{% if edit_faq %}{{ edit_faq.answer }}{% endif %}</textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-medium mb-2">Category:</label>
+                    <input 
+                        type="text" 
+                        name="category" 
+                        value="{% if edit_faq %}{{ edit_faq.category }}{% else %}general{% endif %}" 
+                        class="w-full p-3 border border-polyBorder rounded-lg focus:ring-2 focus:ring-polyMaroon focus:outline-none"
+                        placeholder="e.g., admission, fees, documents">
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <button type="submit" class="bg-polyMaroon hover:bg-polyMaroonLight text-polyWhite font-medium py-2 px-6 rounded-lg transition-colors">
+                        {% if edit_faq %}Update FAQ{% else %}Add FAQ{% endif %}
+                    </button>
+                    {% if edit_faq %}
+                        <a href="{% url 'faq_dashboard' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-lg transition-colors inline-block text-center">
+                            Cancel
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+
+        <!-- Existing FAQs List -->
+        <section>
+            <h2 class="text-2xl font-bold text-polyMaroon mb-4">Existing FAQs</h2>
+
+            {% if faqs %}
+                <div class="space-y-5">
+                    {% for faq in faqs %}
+                        <div class="faq-card bg-white border border-polyBorder rounded-xl p-5 shadow-sm">
+                            <h3 class="text-lg font-bold text-polyMaroon mb-2">{{ faq.question }}</h3>
+                            <p class="text-gray-700 mb-2"><span class="font-medium">Answer:</span> {{ faq.answer }}</p>
+                            <p class="text-gray-600 mb-3"><span class="font-medium">Category:</span> {{ faq.category|title }}</p>
+                            <div class="flex flex-wrap gap-3 pt-2 border-t border-polyBorder/30">
+                                <a href="?edit={{ faq.id }}" class="text-polyMaroon hover:text-polyMaroonLight font-medium text-sm">Edit</a>
+                                <span class="text-gray-400">|</span>
+                                <a href="{% url 'delete_faq' faq.id %}" 
+                                   class="text-red-600 hover:text-red-800 font-medium text-sm"
+                                   onclick="return confirm('Are you sure you want to delete this FAQ?')">
+                                    Delete
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-white border border-polyBorder/50 rounded-xl p-6 text-center">
+                    <p class="text-gray-500 italic">No FAQs available. Add your first FAQ above!</p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!-- templates/chat/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        polyMaroon: '#800000',
+                        polyMaroonLight: '#A52A2A',
+                        polyWhite: '#FFFFFF',
+                        polyLightBg: '#FFF9F9',
+                        polyBorder: '#E0B0B0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body class="bg-polyLightBg text-gray-900 min-h-screen flex flex-col">
+
+    <!-- Fixed Header with Logo -->
+    <header class="fixed top-0 left-0 right-0 z-10 bg-polyMaroon text-polyWhite p-3 shadow-md">
+        <div class="container mx-auto flex items-center">
+            <div class="flex-shrink-0 mr-3">
+                <img 
+                    src="https://akanu-ibiam-poly.edu.ng/wp-content/uploads/2021/09/cropped-Akanu-Ibiam-Polytechnic-Logo.png" 
+                    alt="Akanu Ibiam Polytechnic Logo"
+                    class="h-10 w-auto object-contain"
+                    onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23800000%22/><text x=%2250%22 y=%2255%22 font-family=%22Arial%22 font-size=%2220%22 fill=%22white%22 text-anchor=%22middle%22>AIP</text></svg>'"
+                >
+            </div>
+            <div class="flex-1 text-center">
+                <h1 class="text-lg md:text-xl font-bold tracking-tight">
+                    ADMISSION CHAT BOT MANAGEMENT PORTAL
+                </h1>
+                <p class="text-polyWhite/90 mt-0.5 text-xs">
+                    Akanu Ibiam Federal Polytechnic, Uwana
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Form -->
+    <main class="flex-1 flex items-center justify-center pt-20 px-4">
+        <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-6 border border-polyBorder">
+            <h2 class="text-2xl font-bold text-center text-polyMaroon mb-6">Admin Access</h2>
+
+            <!-- Django Messages -->
+            {% if messages %}
+                <div class="mb-5 space-y-2">
+                    {% for message in messages %}
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded text-sm">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Login Form -->
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-5">
+                    <label for="username" class="block text-gray-700 font-medium mb-2">Username</label>
+                    <input 
+                        type="text" 
+                        id="username"
+                        name="username" 
+                        required 
+                        class="w-full p-3 border border-polyBorder rounded-lg focus:ring-2 focus:ring-polyMaroon focus:outline-none"
+                        placeholder="Enter your username">
+                </div>
+
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-700 font-medium mb-2">Password</label>
+                    <input 
+                        type="password" 
+                        id="password"
+                        name="password" 
+                        required 
+                        class="w-full p-3 border border-polyBorder rounded-lg focus:ring-2 focus:ring-polyMaroon focus:outline-none"
+                        placeholder="Enter your password">
+                </div>
+
+                <button 
+                    type="submit" 
+                    class="w-full bg-polyMaroon hover:bg-polyMaroonLight text-polyWhite font-bold py-3 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-polyMaroon focus:ring-offset-2">
+                    Login
+                </button>
+            </form>
+        </div>
+    </main>
+
+</body>
+</html>
